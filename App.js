@@ -5,6 +5,8 @@ import * as Font from "expo-font";
 import { Asset } from "expo-asset";
 import LoggedOutNav from "./navigators/LoggedOutNav";
 import { NavigationContainer } from "@react-navigation/native";
+import { AppearanceProvider } from "react-native-appearance";
+import { Appearance } from "react-native";
 
 export default function App() {
   const [loading, setLoading] = useState(true);
@@ -28,9 +30,19 @@ export default function App() {
       />
     );
   }
+  // console.log(Appearance.getColorScheme());
+
+  let colorScheme = Appearance.getColorScheme();
+
+  let subscription = Appearance.addChangeListener(({ colorScheme }) => {
+    console.log(colorScheme);
+  });
+
   return (
-    <NavigationContainer>
-      <LoggedOutNav />
-    </NavigationContainer>
+    <AppearanceProvider>
+      <NavigationContainer>
+        <LoggedOutNav />
+      </NavigationContainer>
+    </AppearanceProvider>
   );
 }
