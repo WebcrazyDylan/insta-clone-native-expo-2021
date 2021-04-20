@@ -1,8 +1,14 @@
-import React from "react";
-import { Text, TouchableOpacity, View } from "react-native";
-import { logUserOut } from "../apollo";
+import React, { useEffect } from "react";
+import { Text, View } from "react-native";
+import useMe from "../hooks/useMe";
 
-export default function Me() {
+export default function Me({ navigation }) {
+  const { data } = useMe();
+  useEffect(() => {
+    navigation.setOptions({
+      title: data?.me?.username
+    });
+  }, []);
   return (
     <View
       style={{
@@ -12,9 +18,7 @@ export default function Me() {
         justifyContent: "center"
       }}
     >
-      <TouchableOpacity onPress={() => logUserOut()}>
-        <Text style={{ color: "white" }}>Me</Text>
-      </TouchableOpacity>
+      <Text style={{ color: "white" }}>Me !!</Text>
     </View>
   );
 }
