@@ -5,6 +5,7 @@ export default function ScreenLayout({ loading, children }) {
   return (
     <View
       style={{
+        padding: 5,
         backgroundColor: "black",
         flex: 1,
         alignItems: "center",
