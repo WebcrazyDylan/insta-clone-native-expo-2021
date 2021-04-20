@@ -5,6 +5,16 @@ import { useNavigation } from "@react-navigation/native";
 import styled from "styled-components/native";
 import { Image, useWindowDimensions } from "react-native";
 import { TouchableOpacity } from "react-native-gesture-handler";
+import { gql, useMutation } from "@apollo/client";
+
+const TOGGLE_LIKE_MUTATION = gql`
+  mutation toggleLike($id: Int!) {
+    toggleLike(id: $id) {
+      ok
+      error
+    }
+  }
+`;
 
 const Container = styled.View``;
 const Header = styled.TouchableOpacity`
@@ -16,7 +26,7 @@ const UserAvatar = styled.Image`
   margin-right: 10px;
   width: 25px;
   height: 25px;
-  /* border-radius: 12.5; */
+  border-radius: 12.5px;
 `;
 const Username = styled.Text`
   color: white;
@@ -52,9 +62,39 @@ function Photo({ id, user, caption, file, isLiked, likes }) {
   const [imageHeight, setImageHeight] = useState(height - 450);
   useEffect(() => {
     Image.getSize(file, (width, height) => {
-      setImageHeight(height / 1);
+      setImageHeight(height * 0.9);
     });
   }, [file]);
+  const updateToggleLike = (cache, result) => {
+    const {
+      data: {
+        toggleLike: { ok }
+      }
+    } = result;
+    if (ok) {
+      const photoId = `Photo:${id}`;
+      cache.modify({
+        id: photoId,
+        fields: {
+          isLiked(prev) {
+            return !prev;
+          },
+          likes(prev) {
+            if (isLiked) {
+              return prev - 1;
+            }
+            return prev + 1;
+          }
+        }
+      });
+    }
+  };
+  const [toggleLikeMutation] = useMutation(TOGGLE_LIKE_MUTATION, {
+    variables: {
+      id
+    },
+    update: updateToggleLike
+  });
   return (
     <Container>
       <Header onPress={() => navigation.navigate("Profile")}>
@@ -62,7 +102,7 @@ function Photo({ id, user, caption, file, isLiked, likes }) {
         <Username>{user.username}</Username>
       </Header>
       <File
-        resizeMode="contain"
+        resizeMode="stretch"
         style={{
           width,
           height: imageHeight
@@ -71,7 +111,7 @@ function Photo({ id, user, caption, file, isLiked, likes }) {
       />
       <ExtraContainer>
         <Actions>
-          <Action>
+          <Action onPress={toggleLikeMutation}>
             <Ionicons
               name={isLiked ? "heart" : "heart-outline"}
               color={isLiked ? "tomato" : "white"}
