@@ -4,7 +4,6 @@ import { gql, useQuery } from "@apollo/client";
 import { USER_FRAGMENT } from "../fragments";
 import ScreenLayout from "../components/ScreenLayout";
 import UserRow from "../components/UserRow";
-import AuthLayout from "../components/auth/AuthLayout";
 
 const LIKES_QUERY = gql`
   query seePhotoLikes($id: Int!) {
