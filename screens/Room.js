@@ -1,4 +1,10 @@
-import { gql, useMutation, useQuery } from "@apollo/client";
+import {
+  gql,
+  useApolloClient,
+  useMutation,
+  useQuery,
+  useSubscription
+} from "@apollo/client";
 import React, { useEffect } from "react";
 import { FlatList, KeyboardAvoidingView, View } from "react-native";
 import ScreenLayout from "../components/ScreenLayout";
@@ -6,6 +12,20 @@ import styled from "styled-components/native";
 import { useForm } from "react-hook-form";
 import { Ionicons } from "@expo/vector-icons";
 import useMe from "../hooks/useMe";
+
+const ROOM_UPDATES = gql`
+  subscription roomUpdates($id: Int!) {
+    roomUpdates(id: $id) {
+      id
+      payload
+      user {
+        username
+        avatar
+      }
+      read
+    }
+  }
+`;
 
 const SEND_MESSAGE_MUTATION = gql`
   mutation sendMessage($payload: String!, $roomId: Int, $userId: Int) {
@@ -84,17 +104,61 @@ export default function Room({ route, navigation }) {
     if (ok && meData) {
       const { message } = getValues();
       setValue("message", "");
-      const messageObj = {
-        id,
-        payload: message,
-        user: {
-          username: meData.me.username,
-          avatar: meData.me.avatar
-        },
-        read: true,
-        __typename: "Message"
-      };
-      const messageFragment = cache.writeFragment({
+
+      //   const messageObj = {
+      //     id,
+      //     payload: message,
+      //     user: {
+      //       username: meData.me.username,
+      //       avatar: meData.me.avatar
+      //     },
+      //     read: true,
+      //     __typename: "Message"
+      //   };
+      //   const messageFragment = cache.writeFragment({
+      //     fragment: gql`
+      //       fragment NewMessage on Message {
+      //         id
+      //         payload
+      //         user {
+      //           username
+      //           avatar
+      //         }
+      //         read
+      //       }
+      //     `,
+      //     data: messageObj
+      //   });
+      //   cache.modify({
+      //     id: `Room:${route.params.id}`,
+      //     fields: {
+      //       messages(prev) {
+      //         return [...prev, messageFragment];
+      //       }
+      //     }
+      //   });
+    }
+  };
+  const [sendMessageMutation, { loading: sendingMessage }] = useMutation(
+    SEND_MESSAGE_MUTATION,
+    {
+      update: updateSendMessage
+    }
+  );
+  const { data, loading, subscribeToMore } = useQuery(ROOM_QUERY, {
+    variables: {
+      id: route?.params?.id
+    }
+  });
+  const client = useApolloClient();
+  const updateQuery = (prevQuery, options) => {
+    const {
+      subscriptionData: {
+        data: { roomUpdates: message }
+      }
+    } = options;
+    if (message.id) {
+      const incomingMessage = client.cache.writeFragment({
         fragment: gql`
           fragment NewMessage on Message {
             id
@@ -106,30 +170,35 @@ export default function Room({ route, navigation }) {
             read
           }
         `,
-        data: messageObj
+        data: message
       });
-      cache.modify({
+      client.cache.modify({
         id: `Room:${route.params.id}`,
         fields: {
           messages(prev) {
-            return [...prev, messageFragment];
+            const existingMessage = prev.find(
+              (aMessage) => aMessage.__ref === incomingMessage.__ref
+            );
+            if (existingMessage) {
+              return prev;
+            }
+            return [...prev, incomingMessage];
           }
         }
       });
     }
   };
-  const [sendMessageMutation, { loading: sendingMessage }] = useMutation(
-    SEND_MESSAGE_MUTATION,
-    {
-      update: updateSendMessage
+  useEffect(() => {
+    if (data?.seeRoom) {
+      subscribeToMore({
+        document: ROOM_UPDATES,
+        variables: {
+          id: route?.params?.id
+        },
+        updateQuery
+      });
     }
-  );
-
-  const { data, loading } = useQuery(ROOM_QUERY, {
-    variables: {
-      id: route?.params?.id
-    }
-  });
+  }, [data]);
   const onValid = ({ message }) => {
     if (!sendingMessage) {
       sendMessageMutation({
@@ -194,7 +263,7 @@ export default function Room({ route, navigation }) {
               name="send"
               color={
                 !Boolean(watch("message"))
-                  ? "rgba(255, 255, 255, 0.4)"
+                  ? "rgba(255, 255, 255, 0.5)"
                   : "white"
               }
               size={22}
