@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "insta-clone-native-expo-2021",
+    "name": "JongHyun Insta",
     "slug": "insta-clone-native-expo-2021",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -16,9 +16,13 @@
     },
     "assetBundlePatterns": ["**/*"],
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "com.dylan.jhinsta",
+      "buildNumber": "1.0.0"
     },
     "android": {
+      "package": "com.dylan.jhinsta",
+      "versionCode": 1,
       "adaptiveIcon": {
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#FFFFFF"

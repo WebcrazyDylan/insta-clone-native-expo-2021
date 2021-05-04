@@ -33,11 +33,13 @@ export const logUserOut = async () => {
 };
 
 const uploadHttpLink = createUploadLink({
-  uri: "http://localhost:4000/graphql"
+  uri: "https://insta-clone-backend-prisma-21.herokuapp.com/graphql"
+  // uri: "http://localhost:4000/graphql"
 });
 
 const wsLink = new WebSocketLink({
-  uri: "ws://localhost:4000/graphql",
+  uri: "wss://insta-clone-backend-prisma-21.herokuapp.com/graphql",
+  // uri: "ws://localhost:4000/graphql",
   options: {
     // reconnect: true,
     connectionParams: () => ({
